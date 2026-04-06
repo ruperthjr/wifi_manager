@@ -1,12 +1,40 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/device.dart';
 
-final devicesProvider = StateNotifierProvider<DevicesNotifier, List<Device>>(
-    (ref) => DevicesNotifier());
+const _kDevicesKey = 'nestnet_devices';
+
+final devicesProvider =
+    StateNotifierProvider<DevicesNotifier, List<Device>>(
+        (ref) => DevicesNotifier());
 
 class DevicesNotifier extends StateNotifier<List<Device>> {
-  DevicesNotifier() : super(_seed());
+  DevicesNotifier() : super([]) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_kDevicesKey);
+    if (raw != null) {
+      try {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => Device.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (mounted) state = list;
+        return;
+      } catch (_) {}
+    }
+    if (mounted) state = _seed();
+    await _save();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        _kDevicesKey, jsonEncode(state.map((d) => d.toJson()).toList()));
+  }
 
   static List<Device> _seed() => [
         Device(
@@ -37,7 +65,8 @@ class DevicesNotifier extends StateNotifier<List<Device>> {
           type: DeviceType.tablet,
           isConnected: true,
           signalStrength: 0.62,
-          connectedAt: DateTime.now().subtract(const Duration(minutes: 30)),
+          connectedAt:
+              DateTime.now().subtract(const Duration(minutes: 30)),
         ),
         Device(
           id: 'd4',
@@ -61,20 +90,46 @@ class DevicesNotifier extends StateNotifier<List<Device>> {
         ),
       ];
 
-  void add(Device d) => state = [...state, d];
+  Future<void> add(Device d) async {
+    state = [...state, d];
+    await _save();
+  }
 
-  void remove(String id) => state = state.where((d) => d.id != id).toList();
+  Future<void> remove(String id) async {
+    state = state.where((d) => d.id != id).toList();
+    await _save();
+  }
 
-  void toggle(String id) => state = [
-        for (final d in state)
-          if (d.id == id) d.copyWith(isConnected: !d.isConnected) else d,
-      ];
+  Future<void> toggle(String id) async {
+    state = [
+      for (final d in state)
+        if (d.id == id) d.copyWith(isConnected: !d.isConnected) else d,
+    ];
+    await _save();
+  }
+
+  Future<void> toggleFavorite(String id) async {
+    state = [
+      for (final d in state)
+        if (d.id == id) d.copyWith(isFavorited: !d.isFavorited) else d,
+    ];
+    await _save();
+  }
 }
 
 final connectedDevicesProvider = Provider<List<Device>>(
-  (ref) => ref.watch(devicesProvider).where((d) => d.isConnected).toList(),
+  (ref) =>
+      ref.watch(devicesProvider).where((d) => d.isConnected).toList(),
 );
 
 final deviceCountProvider = Provider<int>(
   (ref) => ref.watch(connectedDevicesProvider).length,
 );
+
+/// Favorites pinned to the top, rest sorted below.
+final sortedDevicesProvider = Provider<List<Device>>((ref) {
+  final all = ref.watch(devicesProvider);
+  final favs = all.where((d) => d.isFavorited).toList();
+  final rest = all.where((d) => !d.isFavorited).toList();
+  return [...favs, ...rest];
+});

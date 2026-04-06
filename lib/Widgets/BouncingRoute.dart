@@ -4,20 +4,23 @@ class BouncingRoute<T> extends PageRouteBuilder<T> {
   BouncingRoute({required Widget page})
       : super(
           pageBuilder: (_, __, ___) => page,
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 350),
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 280),
           transitionsBuilder: (_, animation, __, child) {
-            final bounce = CurvedAnimation(
-              parent: animation,
-              curve: Curves.elasticOut,
-              reverseCurve: Curves.easeIn,
+            final scale = Tween<double>(begin: 0.85, end: 1.0).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.elasticOut,
+                reverseCurve: Curves.easeIn,
+              ),
             );
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1.0, 0.0),
-                end: Offset.zero,
-              ).animate(bounce),
-              child: child,
+            final fade = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeIn,
+            );
+            return ScaleTransition(
+              scale: scale,
+              child: FadeTransition(opacity: fade, child: child),
             );
           },
         );

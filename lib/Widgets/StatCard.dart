@@ -22,10 +22,8 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.all(12),
+    return Container(
+      padding: const EdgeInsets.all(AppDim.md),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(AppDim.rMd),
@@ -41,32 +39,43 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 15),
+            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : AppColors.textDark,
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.textDark,
+                  ),
+                ),
+                TextSpan(
+                  text: ' $unit',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.subtext,
+                  ),
+                ),
+              ],
             ),
-          ),
-          Text(
-            unit,
-            style: GoogleFonts.poppins(
-                fontSize: 10, color: color, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.poppins(fontSize: 9, color: AppColors.subtext),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: AppColors.subtext,
+            ),
           ),
         ],
       ),

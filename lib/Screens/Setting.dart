@@ -140,8 +140,8 @@ class SettingsScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(minimumSize: const Size(80, 42)),
             onPressed: () {
               if (ctrl.text.trim().isNotEmpty) {
-                ref.read(networkNameProvider.notifier).state =
-                    ctrl.text.trim();
+                ref.read(networkNameProvider.notifier).setName
+                    (ctrl.text.trim());
                 Navigator.of(ctx).pop();
               }
             },

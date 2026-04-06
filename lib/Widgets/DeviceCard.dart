@@ -12,22 +12,21 @@ class DeviceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final notifier = ref.read(devicesProvider.notifier);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppDim.md),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(AppDim.rMd),
-        border: Border.all(
-          color: device.isConnected
-              ? AppColors.primary.withOpacity(0.25)
-              : Colors.transparent,
-          width: 1.5,
-        ),
+        border: device.isFavorited
+            ? Border.all(
+                color: AppColors.warning.withOpacity(0.55), width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -37,21 +36,24 @@ class DeviceCard extends ConsumerWidget {
         children: [
           // Icon
           Container(
-            width: 46,
-            height: 46,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: device.isConnected
-                  ? AppColors.primary.withOpacity(0.1)
-                  : AppColors.subtext.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(13),
+              color: (device.isConnected
+                      ? AppColors.primary
+                      : AppColors.subtext)
+                  .withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               device.icon,
-              color: device.isConnected ? AppColors.primary : AppColors.subtext,
-              size: 22,
+              color: device.isConnected
+                  ? AppColors.primary
+                  : AppColors.subtext,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           // Info
           Expanded(
@@ -66,21 +68,18 @@ class DeviceCard extends ConsumerWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textDark,
+                          color:
+                              isDark ? Colors.white : AppColors.textDark,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: device.isConnected
-                            ? AppColors.success
-                            : AppColors.error,
-                        shape: BoxShape.circle,
+                    if (device.isFavorited)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: Icon(Icons.star_rounded,
+                            color: AppColors.warning, size: 13),
                       ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -90,90 +89,76 @@ class DeviceCard extends ConsumerWidget {
                       fontSize: 11, color: AppColors.subtext),
                 ),
                 const SizedBox(height: 6),
-                // Signal bars
                 Row(
                   children: [
-                    ...List.generate(4, (i) => Padding(
-                      padding: const EdgeInsets.only(right: 2),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: 4,
-                        height: 7.0 + (i * 3.5),
-                        decoration: BoxDecoration(
-                          color: i < device.signalBars
-                              ? AppColors.secondary
-                              : AppColors.subtext.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: device.isConnected
+                            ? AppColors.success
+                            : AppColors.subtext,
+                        shape: BoxShape.circle,
                       ),
-                    )),
-                    const SizedBox(width: 6),
+                    ),
+                    const SizedBox(width: 5),
                     Text(
-                      '${(device.signalStrength * 100).round()}%',
+                      device.isConnected ? 'Connected' : 'Offline',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: AppColors.secondary,
+                        color: device.isConnected
+                            ? AppColors.success
+                            : AppColors.subtext,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    _SignalBars(
+                        bars: device.signalBars,
+                        active: device.isConnected),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
 
           // Actions
           Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _ActionBtn(
-                icon: device.isConnected
-                    ? Icons.link_rounded
-                    : Icons.link_off_rounded,
-                color: device.isConnected ? AppColors.success : AppColors.error,
-                onTap: () =>
-                    ref.read(devicesProvider.notifier).toggle(device.id),
+                icon: device.isFavorited
+                    ? Icons.star_rounded
+                    : Icons.star_outline_rounded,
+                color: device.isFavorited
+                    ? AppColors.warning
+                    : AppColors.subtext,
+                bgColor: device.isFavorited
+                    ? AppColors.warning.withOpacity(0.15)
+                    : AppColors.subtext.withOpacity(0.08),
+                onTap: () => notifier.toggleFavorite(device.id),
               ),
               const SizedBox(height: 6),
               _ActionBtn(
-                assetPath: 'Assets/minus.png',
+                icon: device.isConnected
+                    ? Icons.wifi_rounded
+                    : Icons.wifi_off_rounded,
+                color: device.isConnected
+                    ? AppColors.success
+                    : AppColors.subtext,
+                bgColor: device.isConnected
+                    ? AppColors.success.withOpacity(0.12)
+                    : AppColors.subtext.withOpacity(0.08),
+                onTap: () => notifier.toggle(device.id),
+              ),
+              const SizedBox(height: 6),
+              _ActionBtn(
                 icon: Icons.delete_outline_rounded,
                 color: AppColors.error,
-                onTap: () => _confirmRemove(context, ref),
+                bgColor: AppColors.error.withOpacity(0.08),
+                onTap: () => notifier.remove(device.id),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmRemove(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Remove Device',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: Text(
-          'Remove "${device.name}" from your network?',
-          style: GoogleFonts.poppins(fontSize: 14, color: AppColors.subtext),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel',
-                style: GoogleFonts.poppins(color: AppColors.subtext)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                minimumSize: const Size(80, 40)),
-            onPressed: () {
-              ref.read(devicesProvider.notifier).remove(device.id);
-              Navigator.of(ctx).pop();
-            },
-            child: Text('Remove', style: GoogleFonts.poppins()),
           ),
         ],
       ),
@@ -185,37 +170,54 @@ class _ActionBtn extends StatelessWidget {
   const _ActionBtn({
     required this.icon,
     required this.color,
+    required this.bgColor,
     required this.onTap,
-    this.assetPath,
   });
-
   final IconData icon;
   final Color color;
+  final Color bgColor;
   final VoidCallback onTap;
-  final String? assetPath;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(9),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 16),
         ),
-        child: assetPath != null
-            ? Image.asset(
-                assetPath!,
-                width: 15,
-                height: 15,
-                color: color,
-                errorBuilder: (_, __, ___) =>
-                    Icon(icon, size: 15, color: color),
-              )
-            : Icon(icon, size: 15, color: color),
-      ),
-    );
-  }
+      );
+}
+
+class _SignalBars extends StatelessWidget {
+  const _SignalBars({required this.bars, required this.active});
+  final int bars;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(4, (i) {
+          final filled = active && i < bars;
+          return Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Container(
+              width: 3,
+              height: 5.0 + i * 3,
+              decoration: BoxDecoration(
+                color: filled
+                    ? AppColors.secondary
+                    : AppColors.subtext.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          );
+        }),
+      );
 }

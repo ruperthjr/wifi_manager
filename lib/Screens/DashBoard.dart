@@ -16,12 +16,13 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth        = ref.watch(authProvider);
-    final devices     = ref.watch(devicesProvider);
-    final connected   = ref.watch(connectedDevicesProvider);
-    final statsAsync  = ref.watch(networkStatsProvider);
-    final networkName = ref.watch(networkNameProvider);
-    final isDark      = Theme.of(context).brightness == Brightness.dark;
+    final auth          = ref.watch(authProvider);
+    final devices       = ref.watch(devicesProvider);
+    final sortedDevices = ref.watch(sortedDevicesProvider);
+    final connected     = ref.watch(connectedDevicesProvider);
+    final statsAsync    = ref.watch(networkStatsProvider);
+    final networkName   = ref.watch(networkNameProvider);
+    final isDark        = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
@@ -43,7 +44,8 @@ class DashboardScreen extends ConsumerWidget {
                           colors: [AppColors.primary, AppColors.secondary]),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.wifi_rounded, color: Colors.white, size: 20),
+                    child: const Icon(Icons.wifi_rounded,
+                        color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -73,7 +75,6 @@ class DashboardScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Greeting
                     Text(
                       'Hey, ${auth.user?.fullName.split(' ').first ?? 'there'} 👋',
                       style: GoogleFonts.poppins(
@@ -89,11 +90,9 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Network banner
                     _NetworkBanner(name: networkName),
                     const SizedBox(height: 24),
 
-                    // Performance
                     Text(
                       'Network Performance',
                       style: GoogleFonts.poppins(
@@ -151,7 +150,6 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Devices header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -163,7 +161,9 @@ class DashboardScreen extends ConsumerWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : AppColors.textDark,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textDark,
                               ),
                             ),
                             Text(
@@ -182,8 +182,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
 
-            // Device list
-            devices.isEmpty
+            sortedDevices.isEmpty
                 ? SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 48),
@@ -203,14 +202,15 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   )
                 : SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDim.lg),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppDim.lg),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) => Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: DeviceCard(device: devices[i]),
+                          child: DeviceCard(device: sortedDevices[i]),
                         ),
-                        childCount: devices.length,
+                        childCount: sortedDevices.length,
                       ),
                     ),
                   ),
@@ -223,7 +223,6 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-// ── Network Banner ─────────────────────────────────────────────────────────────
 class _NetworkBanner extends StatelessWidget {
   const _NetworkBanner({required this.name});
   final String name;
@@ -258,7 +257,7 @@ class _NetworkBanner extends StatelessWidget {
                 Text(
                   'Active Network',
                   style: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.7), fontSize: 12),
+                      color: Colors.white.withOpacity(0.7), fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -276,14 +275,16 @@ class _NetworkBanner extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: const BoxDecoration(
-                        color: AppColors.success, shape: BoxShape.circle,
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Connected · WPA3 Secured',
                       style: GoogleFonts.poppins(
-                        color: Colors.white.withOpacity(0.85), fontSize: 12),
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 12),
                     ),
                   ],
                 ),
@@ -297,7 +298,6 @@ class _NetworkBanner extends StatelessWidget {
   }
 }
 
-// ── Add Device Button ──────────────────────────────────────────────────────────
 class _AddDeviceButton extends ConsumerStatefulWidget {
   @override
   ConsumerState<_AddDeviceButton> createState() => _AddDeviceButtonState();
@@ -381,9 +381,14 @@ class _AddDeviceButtonState extends ConsumerState<_AddDeviceButton> {
                     children: DeviceType.values.map((t) {
                       final sel = t == selected;
                       final dummy = Device(
-                        id: '', name: '', macAddress: '',
-                        ipAddress: '', type: t, isConnected: true,
-                        signalStrength: 0, connectedAt: DateTime.now(),
+                        id: '',
+                        name: '',
+                        macAddress: '',
+                        ipAddress: '',
+                        type: t,
+                        isConnected: true,
+                        signalStrength: 0,
+                        connectedAt: DateTime.now(),
                       );
                       return GestureDetector(
                         onTap: () => set(() => selected = t),
@@ -467,7 +472,8 @@ class _AddDeviceButtonState extends ConsumerState<_AddDeviceButton> {
     return GestureDetector(
       onTap: _show,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
               colors: [AppColors.primary, AppColors.secondary]),
@@ -488,8 +494,10 @@ class _AddDeviceButtonState extends ConsumerState<_AddDeviceButton> {
               width: 16,
               height: 16,
               color: Colors.white,
-              errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 16),
             ),
             const SizedBox(width: 6),
             Text(
