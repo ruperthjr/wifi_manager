@@ -44,7 +44,7 @@
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/you/nestnet.git
+git clone https://github.com/ruperthjr/wifi_manager.git
 cd nestnet
 
 # 2. Install dependencies
